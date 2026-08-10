@@ -37,7 +37,7 @@ RAG feature is trustworthy in production:
 ```mermaid
 flowchart LR
     subgraph Clients["Any chatbot frontend"]
-        UI[SSE client]
+        UI["SSE client"]
     end
 
     subgraph API["FastAPI (twin_api)"]
@@ -48,24 +48,25 @@ flowchart LR
 
     subgraph RAG["Pipeline (twin_rag)"]
         direction TB
-        SRC[sources] --> CH[chunking] --> EMB[embeddings]
-        EMB --> VS[(vector store)]
-        Q[retriever] --> VS
-        Q --> RR{rerank\nno-op seam}
-        RR --> GEN[generation] --> CITE[citation verify]
+        SRC["sources"] --> CH["chunking"] --> EMB["embeddings"]
+        EMB --> VS[("vector store")]
+        Q["retriever"] --> VS
+        Q --> RR{"rerank<br/>no-op seam"}
+        RR --> GEN["generation"] --> CITE["citation verify"]
     end
 
     subgraph Providers
-        OLL[(Ollama)]
-        CLOUD[(Anthropic / OpenAI)]
-        STORE[(Chroma / pgvector)]
+        OLL[("Ollama")]
+        CLOUD[("Anthropic / OpenAI")]
+        STORE[("Chroma / pgvector")]
     end
 
     UI <-->|Server-Sent Events| CHAT
     CHAT --> Q
     ING --> SRC
-    EMB & GEN --> OLL
-    EMB & GEN -. models.yaml .-> CLOUD
+    EMB --> OLL
+    GEN --> OLL
+    GEN -.->|models.yaml| CLOUD
     VS --> STORE
 ```
 
