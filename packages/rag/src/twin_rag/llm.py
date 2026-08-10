@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Literal, cast
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from pydantic import SecretStr
 from twin_config import Settings, get_settings
 
 LLMProvider = Literal["ollama", "anthropic", "openai"]
@@ -58,7 +59,8 @@ def _build_ollama(settings: Settings, model: str | None, temperature: float) -> 
 
 
 def _build_anthropic(settings: Settings, model: str | None, temperature: float) -> BaseChatModel:
-    if not settings.anthropic_api_key:
+    key = settings.anthropic_api_key
+    if not key:
         raise ValueError(
             "LLM provider 'anthropic' requires TWIN_ANTHROPIC_API_KEY. "
             "Set it in .env or use the 'ollama' provider."
@@ -72,7 +74,7 @@ def _build_anthropic(settings: Settings, model: str | None, temperature: float) 
 
     chat = ChatAnthropic(
         model_name=model or DEFAULT_ANTHROPIC_MODEL,
-        api_key=settings.anthropic_api_key,
+        api_key=SecretStr(key),
         temperature=temperature,
         timeout=60,
         stop=None,
@@ -81,7 +83,8 @@ def _build_anthropic(settings: Settings, model: str | None, temperature: float) 
 
 
 def _build_openai(settings: Settings, model: str | None, temperature: float) -> BaseChatModel:
-    if not settings.openai_api_key:
+    key = settings.openai_api_key
+    if not key:
         raise ValueError(
             "LLM provider 'openai' requires TWIN_OPENAI_API_KEY. "
             "Set it in .env or use the 'ollama' provider."
@@ -95,7 +98,7 @@ def _build_openai(settings: Settings, model: str | None, temperature: float) -> 
 
     chat = ChatOpenAI(
         model=model or DEFAULT_OPENAI_MODEL,
-        api_key=settings.openai_api_key,
+        api_key=SecretStr(key),
         temperature=temperature,
         timeout=60,
     )

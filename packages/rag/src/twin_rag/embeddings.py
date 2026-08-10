@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Literal, cast
 
 from langchain_core.embeddings import Embeddings
+from pydantic import SecretStr
 from twin_config import Settings, get_settings
 
 EmbeddingProvider = Literal["ollama", "openai"]
@@ -56,7 +57,8 @@ def _build_ollama(settings: Settings, model: str | None) -> Embeddings:
 
 
 def _build_openai(settings: Settings, model: str | None) -> Embeddings:
-    if not settings.openai_api_key:
+    key = settings.openai_api_key
+    if not key:
         raise ValueError(
             "Embedding provider 'openai' requires TWIN_OPENAI_API_KEY. "
             "Set it in .env or use the 'ollama' embedder."
@@ -70,6 +72,6 @@ def _build_openai(settings: Settings, model: str | None) -> Embeddings:
 
     embedder = OpenAIEmbeddings(
         model=model or DEFAULT_OPENAI_EMBED_MODEL,
-        api_key=settings.openai_api_key,
+        api_key=SecretStr(key),
     )
     return cast(Embeddings, embedder)
