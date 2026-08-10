@@ -1,0 +1,10 @@
+# Declared document sources. Code references sources by `id`; changing what the twin
+# knows about is an edit here, not a code change. Add a source by giving it a `type`
+# a builder understands (see twin_rag.sources.registry) and an `id`.
+#
+# Relative paths resolve against this file's directory.
+
+sources:
+  - id: personal-docs
+    type: local_dir
+    root: data/sample_corpus

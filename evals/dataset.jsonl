@@ -1,0 +1,6 @@
+{"question": "How many years of engineering experience does Mohit have?", "keywords": ["nine"], "must_cite": ["about.md"], "answer_gist": "Nine years."}
+{"question": "What does Mohit believe about observability?", "keywords": ["observability"], "must_cite": ["engineering-values.md"], "answer_gist": "Observability is not optional; every meaningful operation emits a structured, correlated event."}
+{"question": "What is the Deep Research Agent?", "keywords": ["LangGraph"], "must_cite": ["projects.md"], "answer_gist": "A local-first agentic research assistant built on LangGraph that plans, searches, reflects, and writes cited reports."}
+{"question": "How does Mohit think about switching LLM providers or backends?", "keywords": ["config"], "must_cite": ["engineering-values.md"], "answer_gist": "Switchable things should change by configuration, not by editing code; code references roles and interfaces."}
+{"question": "Which programming languages does Mohit primarily work with?", "keywords": ["Python", "TypeScript"], "must_cite": ["about.md"], "answer_gist": "Python and TypeScript."}
+{"question": "How does Mohit view testing?", "keywords": ["refactoring"], "must_cite": ["engineering-values.md"], "answer_gist": "Tests are a design tool that pin down behaviour and make refactoring safe, not a coverage-chasing exercise."}
