@@ -1,0 +1,110 @@
+[project]
+name = "personal-twin"
+version = "0.1.0"
+description = "Personal Twin — a generic, provider-agnostic RAG backend (Chroma, FastAPI, switchable LLMs)"
+requires-python = ">=3.12"
+dependencies = [
+    "twin-api",
+    "twin-config",
+    "twin-observability",
+    "twin-rag",
+]
+
+[project.optional-dependencies]
+# Mirror the rag extras at the root so `uv sync --all-extras` reaches provider SDKs.
+anthropic = ["twin-rag[anthropic]"]
+openai = ["twin-rag[openai]"]
+pgvector = ["twin-rag[pgvector]"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "mypy>=1.13.0",
+    "ruff>=0.8.0",
+    "httpx>=0.28.0",
+    "asgi-lifespan>=2.1.0",
+    "types-pyyaml>=6.0.12",
+]
+
+[tool.uv.workspace]
+members = ["apps/*", "packages/*"]
+
+[tool.uv.sources]
+twin-api = { workspace = true }
+twin-config = { workspace = true }
+twin-observability = { workspace = true }
+twin-rag = { workspace = true }
+
+# ---------------------------------------------------------------------------
+# Lint / format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "B",        # bugbear
+    "UP",       # pyupgrade
+    "ANN",      # flake8-annotations — no untyped public function
+    "ASYNC",    # flake8-async
+    "S",        # bandit (SAST)
+    "T20",      # no print()
+    "RUF",
+]
+ignore = [
+    "ANN401",  # allow typing.Any in narrow, documented spots
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "ANN"]     # asserts and loose annotations are fine in tests
+"evals/**" = ["T20"]                # eval runners print human-readable tables
+"apps/*/src/*/cli.py" = ["T20"]     # CLIs print to the console by design
+# The only interpolated value is the table name, guarded by `_validate_identifier`;
+# every user value is a bound parameter. S608 is a false positive here.
+"packages/rag/src/twin_rag/vectorstore/pgvector.py" = ["S608"]
+
+# ---------------------------------------------------------------------------
+# Types — no untyped public function, no implicit Any
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "chromadb.*",
+    "langchain_ollama.*",
+    "langchain_anthropic.*",
+    "langchain_openai.*",
+    "psycopg.*",
+    "pgvector.*",
+]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["apps", "packages"]
+asyncio_mode = "auto"
+addopts = "-q --strict-markers"
+markers = [
+    "integration: requires real backing services (a live model, Postgres, etc.)",
+]
+
+[tool.coverage.run]
+source = ["packages"]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+# Enforce coverage on packages/ (pure logic), not on I/O glue in apps/.
+fail_under = 85
+show_missing = true
