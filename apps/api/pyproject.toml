@@ -1,0 +1,27 @@
+[project]
+name = "twin-api"
+version = "0.1.0"
+description = "Personal Twin query API — FastAPI + SSE over the RAG pipeline"
+requires-python = ">=3.12"
+dependencies = [
+    "twin-config",
+    "twin-observability",
+    "twin-rag",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+]
+
+[project.scripts]
+twin = "twin_api.cli:main"
+
+[tool.uv.sources]
+twin-config = { workspace = true }
+twin-observability = { workspace = true }
+twin-rag = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/twin_api"]
