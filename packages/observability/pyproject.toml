@@ -1,0 +1,20 @@
+[project]
+name = "twin-observability"
+version = "0.1.0"
+description = "Structured logging, correlation IDs, step events, and opt-in tracing for Personal Twin"
+requires-python = ">=3.12"
+dependencies = [
+    "twin-config",
+    "pydantic>=2.9.0",
+    "structlog>=24.4.0",
+]
+
+[tool.uv.sources]
+twin-config = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/twin_observability"]
