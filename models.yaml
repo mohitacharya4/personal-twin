@@ -1,0 +1,62 @@
+# Role → provider+model mapping. Code references ROLES, never model names, so switching
+# a provider is a change to this file, not to code. Select a profile with
+# TWIN_MODELS_PROFILE (default: the profile named below).
+#
+# Each role may declare a `fallback`. When the primary provider can't be built (missing
+# API key or provider extra), the registry uses the fallback instead of crashing.
+#
+# ⚠️  The `embedder` role is special: changing it is a MIGRATION, not a tweak. Vectors
+# from different embedding models must not be mixed in one store — re-ingest after a change.
+
+default_profile: local
+
+profiles:
+  # Fully offline. Runs on Ollama with no hosted API keys — the privacy-first default.
+  local:
+    generator:
+      provider: ollama
+      model: qwen2.5:7b-instruct
+      params: { temperature: 0.1 }
+      fallback: null
+    embedder:
+      provider: ollama
+      model: nomic-embed-text
+      params: {}
+      fallback: null
+    verifier:               # used by the eval LLM-judge
+      provider: ollama
+      model: qwen2.5:7b-instruct
+      params: { temperature: 0 }
+      fallback: null
+    reranker:               # reserved seam — no-op pass-through today
+      provider: none
+      model: null
+      params: {}
+      fallback: null
+
+  # Strong hosted models for generation/verification; local embeddings (cheap, private).
+  hosted:
+    generator:
+      provider: anthropic
+      model: claude-sonnet-5
+      params: { temperature: 0.1 }
+      fallback: { provider: ollama, model: qwen2.5:7b-instruct }
+    embedder:
+      provider: ollama
+      model: nomic-embed-text
+      params: {}
+      fallback: null
+    verifier:
+      provider: anthropic
+      model: claude-sonnet-5
+      params: { temperature: 0 }
+      fallback: { provider: ollama, model: qwen2.5:7b-instruct }
+    reranker:
+      provider: none
+      model: null
+      params: {}
+      fallback: null
+
+# Per-request guardrails (advisory; enforced by callers as the system grows).
+budgets:
+  request_timeout_seconds: 60
