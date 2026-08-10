@@ -1,0 +1,17 @@
+[project]
+name = "twin-config"
+version = "0.1.0"
+description = "Typed, validated, fail-fast configuration for Personal Twin"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "pyyaml>=6.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/twin_config"]
