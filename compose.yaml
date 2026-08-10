@@ -1,0 +1,93 @@
+# The stack: the Personal Twin API + a local Ollama for models.
+#
+# First run must pull the models into the Ollama volume (once):
+#   docker compose up -d ollama
+#   docker compose exec ollama ollama pull qwen2.5:7b-instruct
+#   docker compose exec ollama ollama pull nomic-embed-text
+#   docker compose run --rm ingest        # index the sample corpus
+#   docker compose up api                 # API on :8000
+#
+# pgvector instead of Chroma:  docker compose --profile postgres up
+
+name: personal-twin
+
+x-api-env: &api-env
+  TWIN_APP_ENV: ${TWIN_APP_ENV:-dev}
+  TWIN_LOG_LEVEL: ${TWIN_LOG_LEVEL:-INFO}
+  TWIN_OLLAMA_BASE_URL: http://ollama:11434
+  TWIN_CHROMA_PATH: /app/data/chroma
+  TWIN_MODELS_CONFIG_PATH: /app/models.yaml
+  TWIN_SOURCES_CONFIG_PATH: /app/sources.yaml
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - '11434:11434'
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: personal-twin:local
+    command: ['api']
+    environment:
+      <<: *api-env
+    ports:
+      - '8000:8000'
+    volumes:
+      - twindata:/app/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 20s
+
+  # One-shot: index the configured sources, then exit. `docker compose run --rm ingest`.
+  ingest:
+    image: personal-twin:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ['ingest']
+    environment:
+      <<: *api-env
+    volumes:
+      - twindata:/app/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+    profiles: ['tools']
+
+  # Opt-in production vector store. Enable with `--profile postgres` and set
+  # TWIN_VECTOR_STORE_BACKEND=pgvector + TWIN_DATABASE_URL for the api service.
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: twin
+      POSTGRES_PASSWORD: twin
+      POSTGRES_DB: twin
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U twin -d twin']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    profiles: ['postgres']
+
+volumes:
+  ollama:
+  twindata:
+  pgdata:
