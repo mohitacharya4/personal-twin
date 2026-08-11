@@ -17,6 +17,8 @@ htmlcov/
 # Data / artifacts (never commit a corpus or a vector store)
 data/chroma/
 data/*.db
+# Personal / private corpora — keep real documents out of the public repo.
+data/my_docs/
 evals/results/
 runs/
 *.log

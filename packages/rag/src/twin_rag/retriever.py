@@ -43,19 +43,25 @@ class Retriever:
         store: VectorStore,
         *,
         top_k: int,
+        min_score: float = 0.0,
         over_fetch: int | None = None,
         reranker: Reranker | None = None,
     ) -> None:
         self._embedder = embedder
         self._store = store
         self._top_k = top_k
+        self._min_score = min_score
         # With a no-op reranker there is nothing to gain from over-fetching, so default
         # to top_k. A real reranker sets over_fetch > top_k to widen the candidate net.
         self._over_fetch = over_fetch if over_fetch is not None else top_k
         self._reranker = reranker or NoOpReranker()
 
     def retrieve(self, query: str, *, sink: EventSink | None = None) -> list[ScoredChunk]:
-        """Return the top-k most relevant chunks for ``query``, most relevant first."""
+        """Return the most relevant chunks for ``query`` that clear the score floor.
+
+        Returns ``[]`` when nothing clears :attr:`min_score` — the caller treats that as
+        an out-of-scope question rather than answering from weak, off-topic context.
+        """
         query_vector = self._embedder.embed_query(query)
         candidates = self._store.similarity_search(query_vector, k=self._over_fetch)
         if sink is not None:
@@ -71,9 +77,23 @@ class Retriever:
         if not isinstance(self._reranker, NoOpReranker) and sink is not None:
             sink(
                 StepEvent(
-                    node="rerank",
-                    phase="complete",
-                    message=f"Reranked to top {len(reranked)}",
+                    node="rerank", phase="complete", message=f"Reranked to top {len(reranked)}"
                 )
             )
-        return reranked
+
+        # Relevance floor: keep only chunks the store is confident about. When the floor
+        # removes everything, the top candidate (if any) explains why in the trace.
+        kept = [c for c in reranked if c.score >= self._min_score]
+        if not kept and reranked and sink is not None:
+            sink(
+                StepEvent(
+                    node="retrieve",
+                    phase="complete",
+                    message=(
+                        f"No chunk cleared the relevance floor "
+                        f"(best {reranked[0].score:.3f} < {self._min_score:.2f})"
+                    ),
+                    data={"best_score": reranked[0].score, "min_score": self._min_score},
+                )
+            )
+        return kept

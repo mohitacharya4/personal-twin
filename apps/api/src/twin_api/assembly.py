@@ -57,6 +57,7 @@ def build_answer_pipeline(
         registry.embedder(),
         store or get_vector_store(settings),
         top_k=settings.retrieval_top_k,
+        min_score=settings.retrieval_min_score,
     )
     return AnswerPipeline(retriever, registry.chat_model("generator"))
 

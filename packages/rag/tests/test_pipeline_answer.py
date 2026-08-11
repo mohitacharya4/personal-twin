@@ -54,6 +54,17 @@ def test_empty_store_returns_no_knowledge_answer() -> None:
     assert answer.citations == []
 
 
+def test_relevance_floor_treats_weak_matches_as_out_of_scope() -> None:
+    # A high floor removes every retrieved chunk -> no context -> honest no-knowledge answer,
+    # and generation is skipped entirely (the canned response is never used).
+    retriever = Retriever(HashEmbedder(), _seed_store(), top_k=3, min_score=0.99)
+    pipeline = AnswerPipeline(retriever, make_fake_chat_model("SHOULD NOT APPEAR [1]"))
+    answer = pipeline.run("What do you value?")
+    assert "don't have information" in answer.text
+    assert answer.contexts == []
+    assert answer.citations == []
+
+
 def test_run_emits_stage_events() -> None:
     pipeline = _pipeline(_seed_store(), "Answer [1].")
     events: list[StepEvent] = []

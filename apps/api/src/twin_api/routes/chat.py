@@ -104,16 +104,19 @@ async def _stream_answer(request: Request, answer: Answer) -> AsyncIterator[SSEE
         await asyncio.sleep(_TOKEN_DELAY_SECONDS)
 
     citations = [c.model_dump() for c in answer.citations]
-    contexts = [
-        {
-            "marker": i,
-            "title": s.chunk.title,
-            "score": round(s.score, 4),
-            "uri": s.chunk.metadata.get("uri"),
-        }
-        for i, s in enumerate(answer.contexts, start=1)
-    ]
-    yield sources(citations, contexts)
+    # Only surface sources when there is grounding context — an out-of-scope answer
+    # (nothing cleared the relevance floor) has none, so we don't show empty "sources".
+    if answer.contexts:
+        contexts = [
+            {
+                "marker": i,
+                "title": s.chunk.title,
+                "score": round(s.score, 4),
+                "uri": s.chunk.metadata.get("uri"),
+            }
+            for i, s in enumerate(answer.contexts, start=1)
+        ]
+        yield sources(citations, contexts)
     yield done(answer.text, citations)
 
 

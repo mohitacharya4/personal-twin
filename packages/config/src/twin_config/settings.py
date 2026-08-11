@@ -80,6 +80,11 @@ class Settings(BaseSettings):
     chunk_size: Annotated[int, Field(ge=100, le=4000)] = 800
     chunk_overlap: Annotated[int, Field(ge=0, le=1000)] = 120
     retrieval_top_k: Annotated[int, Field(ge=1, le=50)] = 5
+    #: Drop retrieved chunks scoring below this cosine-similarity floor. When every
+    #: candidate is below it the question is treated as out-of-scope (no context →
+    #: honest "no information" answer, no wasted generation). 0.0 disables the floor.
+    #: Tune per corpus/embedder; 0.5 suits nomic-embed-text on prose.
+    retrieval_min_score: Annotated[float, Field(ge=0.0, le=1.0)] = 0.5
 
     # --- Observability ---------------------------------------------------
     persist_traces: bool = True
