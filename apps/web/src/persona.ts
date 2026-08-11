@@ -6,10 +6,12 @@ export const persona = {
   initials: 'MA',
   role: 'Senior Software Engineer',
   tagline: 'Ask my digital twin — grounded in my real documents, answers with sources.',
+  // These match the shipped sample corpus (data/sample_corpus) so the app answers well out
+  // of the box. Swap them for questions that fit your own documents once you re-ingest.
   starters: [
-    'What is your experience with distributed systems?',
-    'What programming languages are you fluent in?',
-    'How many technical interviews have you conducted?',
-    'What cloud platforms have you worked with?',
+    'What do you value in engineering?',
+    'What projects have you built?',
+    'How do you approach testing and observability?',
+    'What is your engineering background?',
   ],
 };

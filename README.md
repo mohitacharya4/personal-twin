@@ -109,6 +109,19 @@ A polished React UI ([`apps/web`](./apps/web)) — a dark "AI console" that stre
 shows the live pipeline (retrieve → generate → verify), renders clickable `[n]` citations,
 and lists the retrieved sources with similarity scores.
 
+![A cited answer with the live retrieve → generate → verify pipeline and the retrieved sources, each scored.](docs/screenshots/chat-dark.jpg)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/hero.jpg" alt="Welcome screen with the twin persona and starter questions" /></td>
+    <td width="50%"><img src="docs/screenshots/light.jpg" alt="The same conversation in the light theme" /></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Welcome & starters</em></td>
+    <td align="center"><em>Light theme</em></td>
+  </tr>
+</table>
+
 ```bash
 cd apps/web
 npm install
