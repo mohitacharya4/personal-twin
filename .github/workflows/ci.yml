@@ -38,3 +38,27 @@ jobs:
       - name: Pytest (+ coverage gate)
         # Unit tests only: anything needing a live model or Postgres is marked `integration`.
         run: uv run pytest -m "not integration" --cov --cov-report=term-missing
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Prettier (format check)
+        run: npx prettier --check "src/**/*.{ts,tsx}"
+
+      - name: Type-check + build
+        run: npm run build
