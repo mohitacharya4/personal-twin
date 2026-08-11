@@ -103,6 +103,22 @@ curl -N -X POST localhost:8000/chat \
 Point it at **your own** documents by editing `sources.yaml` (drop `.md`/`.txt`/`.pdf`
 files under a directory) and re-running `uv run twin ingest`.
 
+### Web UI
+
+A polished React UI ([`apps/web`](./apps/web)) — a dark "AI console" that streams answers,
+shows the live pipeline (retrieve → generate → verify), renders clickable `[n]` citations,
+and lists the retrieved sources with similarity scores.
+
+```bash
+cd apps/web
+npm install
+npm run dev          # http://localhost:5173  (proxies to the API on :8000)
+```
+
+Run the backend (`uv run twin serve`) alongside it — the dev server proxies API calls, so
+no CORS or env setup is needed. Re-skin the persona (name, role, starter questions) in
+`apps/web/src/persona.ts`.
+
 ### Or with Docker
 
 ```bash
@@ -110,7 +126,7 @@ docker compose up -d ollama
 docker compose exec ollama ollama pull qwen2.5:7b-instruct
 docker compose exec ollama ollama pull nomic-embed-text
 docker compose run --rm ingest      # index the sample corpus
-docker compose up api               # API on :8000
+docker compose up api web           # API on :8000, UI on :3000
 ```
 
 ## API
@@ -178,6 +194,7 @@ covered by CI even though full runs need a live model.
 ```
 personal-twin/
   apps/api/            twin_api        — FastAPI: /chat (SSE), /ingest, /health; the `twin` CLI
+  apps/web/            twin-web        — React + TS + Tailwind UI (streaming chat, live trace, citations)
   packages/
     config/            twin_config     — typed settings + models.yaml parser (fail-fast)
     observability/     twin_observability — logging, correlation ids, step events, JSONL traces
@@ -195,7 +212,7 @@ personal-twin/
   models.yaml          role → provider mapping (profiles: local, hosted)
   sources.yaml         declared document sources
   evals/               golden dataset + LLM-judge runner
-  compose.yaml         api + ollama (+ optional postgres profile)
+  compose.yaml         api + ollama + web (+ optional postgres profile)
 ```
 
 ## Design notes
@@ -212,6 +229,7 @@ personal-twin/
 
 **Backend:** Python 3.12 · FastAPI · LangChain · Ollama / Anthropic / OpenAI · Chroma /
 pgvector · pydantic · structlog
+**Frontend:** React 18 · TypeScript (strict) · Vite · Tailwind CSS
 **Tooling:** uv (workspace) · ruff · mypy (strict) · pytest + coverage · Docker · GitHub Actions
 
 ## License

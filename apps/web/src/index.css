@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Design tokens. Colors are space-separated RGB triplets so Tailwind's */
+/* `rgb(var(--x) / <alpha>)` can apply opacity. Dark is the default.    */
+/* ------------------------------------------------------------------ */
+:root,
+[data-theme='dark'] {
+  --bg: 8 11 18;
+  --surface: 13 17 27;
+  --elevated: 20 26 40;
+  --border: 42 50 68;
+  --ink: 230 234 242;
+  --muted: 148 156 176;
+  --faint: 99 108 128;
+  --violet: 139 92 246;
+  --cyan: 34 211 238;
+  --glow: 139 92 246;
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: 244 246 251;
+  --surface: 255 255 255;
+  --elevated: 255 255 255;
+  --border: 224 228 238;
+  --ink: 17 22 35;
+  --muted: 90 100 122;
+  --faint: 140 148 166;
+  --violet: 124 58 237;
+  --cyan: 8 145 178;
+  --glow: 124 58 237;
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(60rem 60rem at 15% -10%, rgb(var(--violet) / 0.12), transparent 60%),
+      radial-gradient(50rem 50rem at 100% 0%, rgb(var(--cyan) / 0.1), transparent 55%);
+    background-attachment: fixed;
+  }
+  ::selection {
+    background: rgb(var(--violet) / 0.35);
+  }
+}
+
+@layer components {
+  .accent-gradient {
+    background-image: linear-gradient(135deg, rgb(var(--violet)), rgb(var(--cyan)));
+  }
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(120deg, rgb(var(--violet)), rgb(var(--cyan)));
+  }
+  .glass {
+    background: rgb(var(--surface) / 0.72);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgb(var(--border) / 0.7);
+  }
+  .card {
+    @apply rounded-2xl border bg-surface/60;
+  }
+  .focus-ring {
+    @apply outline-none ring-offset-2 ring-offset-bg focus-visible:ring-2 focus-visible:ring-violet/70;
+  }
+  .btn-accent {
+    @apply accent-gradient grid place-items-center rounded-xl text-white shadow-lg transition;
+    box-shadow: 0 6px 24px -8px rgb(var(--glow) / 0.7);
+  }
+  .btn-accent:hover {
+    filter: brightness(1.08);
+  }
+  .btn-accent:disabled {
+    @apply cursor-not-allowed opacity-40;
+    filter: none;
+  }
+  .chip {
+    @apply rounded-full border bg-surface/50 px-3.5 py-1.5 text-sm text-muted transition hover:border-violet/50 hover:text-ink;
+  }
+  .cite-pill {
+    @apply mx-0.5 inline-flex h-[1.15em] min-w-[1.15em] items-center justify-center rounded-[0.4em] px-1 align-baseline text-[0.72em] font-semibold leading-none transition;
+    background: rgb(var(--violet) / 0.16);
+    color: rgb(var(--violet));
+    border: 1px solid rgb(var(--violet) / 0.3);
+  }
+  [data-theme='light'] .cite-pill {
+    color: rgb(88 28 235);
+  }
+  .cite-pill:hover {
+    background: rgb(var(--violet) / 0.28);
+  }
+}
+
+/* Custom scrollbar — subtle, on-brand. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--border)) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--faint));
+  background-clip: content-box;
+}

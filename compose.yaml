@@ -5,7 +5,7 @@
 #   docker compose exec ollama ollama pull qwen2.5:7b-instruct
 #   docker compose exec ollama ollama pull nomic-embed-text
 #   docker compose run --rm ingest        # index the sample corpus
-#   docker compose up api                 # API on :8000
+#   docker compose up api web             # API on :8000, UI on :3000
 #
 # pgvector instead of Chroma:  docker compose --profile postgres up
 
@@ -51,6 +51,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
     stop_grace_period: 20s
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    image: personal-twin-web:local
+    ports:
+      - '3000:80'
+    depends_on:
+      - api
+    restart: unless-stopped
 
   # One-shot: index the configured sources, then exit. `docker compose run --rm ingest`.
   ingest:

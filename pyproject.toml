@@ -29,7 +29,8 @@ dev = [
 ]
 
 [tool.uv.workspace]
-members = ["apps/*", "packages/*"]
+members = ["apps/api", "packages/*"]
+exclude = ["apps/web"]
 
 [tool.uv.sources]
 twin-api = { workspace = true }
