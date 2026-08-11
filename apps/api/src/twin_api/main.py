@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from twin_config import Settings, get_settings
 from twin_observability import configure_langsmith, configure_logging, get_logger
 
@@ -65,10 +66,18 @@ def create_app(settings: Settings | None = None, *, backend: Backend | None = No
     if backend is not None:
         app.state.backend = backend
 
-    # Order matters: correlation ids are bound outermost so every log line — including
-    # the request-logging middleware's own — carries one.
+    # Order matters (middleware runs bottom-up on the request): correlation ids are bound
+    # outermost so every log line — including the request-logging middleware's own — carries
+    # one, and CORS runs first on the response so even error responses are browser-readable.
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved.cors_origin_list,
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+        expose_headers=["X-Correlation-ID"],
+    )
 
     app.include_router(ops_router)
     app.include_router(chat_router)

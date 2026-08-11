@@ -5,6 +5,10 @@ This module checks that every marker actually points at a retrieved chunk: valid
 become :class:`~twin_rag.models.Citation`s, and *dangling* markers (``[7]`` when only 5
 chunks were retrieved — the classic sign of a model citing something it invented) are
 stripped from the text and reported so the caller can surface or act on them.
+
+Grouped markers are normalised too: models routinely write ``[1, 3]`` for two sources, so
+we expand those to ``[1][3]`` — the single-marker form every consumer (the SSE stream, the
+UI) already understands — keeping only the numbers that resolve.
 """
 
 from __future__ import annotations
@@ -13,7 +17,8 @@ import re
 
 from twin_rag.models import Citation, ScoredChunk
 
-_MARKER = re.compile(r"\[(\d+)\]")
+# One or more comma-separated numbers inside a single bracket: [1], [1,3], [1, 2, 4].
+_GROUP = re.compile(r"\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]")
 
 
 class CitationResult:
@@ -30,31 +35,35 @@ class CitationResult:
 def verify_citations(text: str, contexts: list[ScoredChunk]) -> CitationResult:
     """Validate ``[n]`` markers in ``text`` against the retrieved ``contexts``.
 
-    Returns the cleaned text (dangling markers removed), the verified citations in marker
-    order, and the list of unsupported marker numbers that were removed.
+    Returns the normalised text (grouped markers split, dangling markers removed), the
+    verified citations in first-appearance order, and the unsupported marker numbers.
     """
     valid_range = range(1, len(contexts) + 1)
-    referenced = [int(m) for m in _MARKER.findall(text)]
-    unsupported = sorted({n for n in referenced if n not in valid_range})
-
-    cleaned = _strip_dangling(text, valid_range)
-
-    used = sorted({n for n in referenced if n in valid_range})
-    citations = [_citation_for(n, contexts[n - 1]) for n in used]
-    return CitationResult(cleaned, citations, unsupported)
-
-
-def _strip_dangling(text: str, valid_range: range) -> str:
-    """Remove markers that point nowhere; tidy the whitespace the removal leaves behind."""
+    used: list[int] = []
+    unsupported: set[int] = set()
 
     def replace(match: re.Match[str]) -> str:
-        n = int(match.group(1))
-        return match.group(0) if n in valid_range else ""
+        valid: list[int] = []
+        for raw in match.group(1).split(","):
+            n = int(raw)
+            if n in valid_range:
+                valid.append(n)
+                if n not in used:
+                    used.append(n)
+            else:
+                unsupported.add(n)
+        return "".join(f"[{n}]" for n in valid)  # dangling numbers dropped
 
-    cleaned = _MARKER.sub(replace, text)
-    cleaned = re.sub(r" +([.,;:])", r"\1", cleaned)  # " ." -> "."
-    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
-    return cleaned.strip()
+    cleaned = _tidy(_GROUP.sub(replace, text))
+    citations = [_citation_for(n, contexts[n - 1]) for n in used]
+    return CitationResult(cleaned, citations, sorted(unsupported))
+
+
+def _tidy(text: str) -> str:
+    """Tidy whitespace left where markers were removed (e.g. ``Invented .`` -> ``Invented.``)."""
+    text = re.sub(r" +([.,;:])", r"\1", text)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    return text.strip()
 
 
 def _citation_for(marker: int, scored: ScoredChunk) -> Citation:
